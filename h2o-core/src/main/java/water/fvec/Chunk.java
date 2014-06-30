@@ -64,6 +64,11 @@ public abstract class Chunk extends Iced implements Cloneable {
     if( 0 <= x && x < _len ) return at16h0((int)x);
     throw new ArrayIndexOutOfBoundsException(""+_start+" <= "+i+" < "+(_start+_len));
   }
+  public final String atStr( long i ) {
+    long x = i-_start;
+    if( 0 <= x && x < _len) return atStr0((int)x);
+    throw new ArrayIndexOutOfBoundsException(""+_start+" <= "+i+" < "+(_start+_len));
+  }
 
 
   /** The zero-based API.  Somewhere between 10% to 30% faster in a tight-loop
@@ -75,6 +80,7 @@ public abstract class Chunk extends Iced implements Cloneable {
   public final boolean isNA0( int i ) { return _chk2 == null ?isNA_impl(i) : _chk2.isNA_impl(i); }
   public final long   at16l0( int i ) { return _chk2 == null ? at16l_impl(i) : _chk2.at16l_impl(i); }
   public final long   at16h0( int i ) { return _chk2 == null ? at16h_impl(i) : _chk2.at16h_impl(i); }
+  public final String atStr0( int i ) { return _chk2 == null ? atStr_impl(i) : _chk2.atStr_impl(i); }
 
 
   /** Write element the slow way, as a long.  There is no way to write a
@@ -91,6 +97,8 @@ public abstract class Chunk extends Iced implements Cloneable {
   public final void set( long i, float  f) { long x = i-_start; if (0 <= x && x < _len) set0((int)x,f); else _vec.set(i,f); }
   /** Set the element as missing the slow way.  */
   final void setNA( long i ) { long x = i-_start; if (0 <= x && x < _len) setNA0((int)x); else _vec.setNA(i); }
+
+  public final void set( long i, String str) { long x = i-_start; if (0 <= x && x < _len) set0((int)x,str); else _vec.set(i,str); }
   
   private void setWrite() {
     if( _chk2 != null ) return; // Already setWrite
@@ -141,6 +149,13 @@ public abstract class Chunk extends Iced implements Cloneable {
     return true;
   }
 
+  public final String set0(int idx, String str) {
+    setWrite();
+    if( _chk2.set_impl(idx,str) ) return str;
+    (_chk2 = inflate_impl(new NewChunk(this))).set_impl(idx,str);
+    return str;
+  }
+
   /** After writing we must call close() to register the bulk changes */
   public Futures close( int cidx, Futures fs ) {
     if( this  instanceof NewChunk ) _chk2 = this;
@@ -159,6 +174,7 @@ public abstract class Chunk extends Iced implements Cloneable {
   abstract protected boolean isNA_impl(int idx);
   protected long at16l_impl(int idx) { throw new IllegalArgumentException("Not a UUID"); }
   protected long at16h_impl(int idx) { throw new IllegalArgumentException("Not a UUID"); }
+  protected String atStr_impl(int idx) { throw new IllegalArgumentException("Not a String"); }
   
   /** Chunk-specific writer.  Returns false if the value does not fit in the
    *  current compression scheme.  */
@@ -166,6 +182,7 @@ public abstract class Chunk extends Iced implements Cloneable {
   abstract boolean set_impl  (int idx, double d );
   abstract boolean set_impl  (int idx, float f );
   abstract boolean setNA_impl(int idx);
+  boolean set_impl (int idx, String str) { throw new IllegalArgumentException("Not a String"); }
 
   int nextNZ(int rid){return rid+1;}
   public boolean isSparse() {return false;}
