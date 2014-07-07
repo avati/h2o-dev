@@ -1,6 +1,7 @@
 package water.fvec;
 
 import water.*;
+import water.util.UnsafeUtils;
 
 public class CStrChunk extends Chunk {
   byte _strbuf[];
@@ -8,7 +9,7 @@ public class CStrChunk extends Chunk {
   public CStrChunk(byte ssbuf[], byte isbuf[], int len) {
     _mem = isbuf;
     _strbuf = ssbuf;
-    _len = _strbuf.length >> 2;
+    _len = _mem.length >> 2;
   }
 
   @Override public boolean setNA_impl(int idx) { throw new IllegalArgumentException("Only Strings allowed");}
@@ -22,7 +23,7 @@ public class CStrChunk extends Chunk {
   @Override public long at8_impl(int idx) { throw new IllegalArgumentException("Only Strings allowed");}
   @Override public double atd_impl(int idx) { throw new IllegalArgumentException("Only Strings allowed");}
   @Override public String atStr_impl(int idx) {
-    int off = UDP.get4(_mem,idx<<2);
+    int off = UnsafeUtils.get4(_mem,idx<<2);
     if (off == -1)
       return null;
     int len;
@@ -51,7 +52,7 @@ public class CStrChunk extends Chunk {
     nc._sslen = _strbuf.length;
     nc._is = MemoryManager.malloc4(_len);
     for( int i = 0; i < _len; i++ ) {
-      nc._is[i] = UDP.get4(_mem,i<<2);
+      nc._is[i] = UnsafeUtils.get4(_mem,i<<2);
     }
     return nc;
   }
